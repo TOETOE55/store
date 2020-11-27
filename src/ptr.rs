@@ -1,13 +1,13 @@
 use std::ops::{Deref, DerefMut};
 
-
-
+/// The share pointer to A can refer to its parent S
 pub struct Store<'a, S: ?Sized, A: ?Sized>
 {
     stored: &'a S,
     accessor: fn(&S) -> &A,
 }
 
+/// The mutable pointer to A can refer to its parent S
 pub struct StoreMut<'a, S: ?Sized, A: ?Sized>
 {
     stored: &'a mut S,

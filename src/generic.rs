@@ -12,22 +12,23 @@
 // impl<S: ?Sized, A: ?Sized, B: ?Sized, F, Acc> Map<F, Acc> for Accessor<>{
 //
 
-use std::ops::Deref;
+// fn coerce<A: ?Sized, B:?Sized, F: for<'a> Fn(&'a A) -> &'a B>(f: F) -> F { f }
 
-pub struct Store<'a, S: ?Sized, Acc, A: ?Sized + 'a>
-where
-    Acc: Fn(&'a S) -> &'a A,
-{
+use std::ops::Deref;
+use std::marker::PhantomData;
+
+pub struct Store<'a, S: ?Sized, Acc, A: ?Sized> {
     stored: &'a S,
     accessor: Acc,
+    _marker: PhantomData<&'a A>
 }
 
-impl<'a, S: ?Sized, Acc, A: ?Sized + 'a> Store<'a, S, Acc, A>
+impl<'a, S: ?Sized, Acc, A: ?Sized> Store<'a, S, Acc, A>
 where
     Acc: Fn(&'a S) -> &'a A,
 {
     pub fn new(stored: &'a S, accessor: Acc) -> Self {
-        Self { stored, accessor }
+        Self { stored, accessor, _marker: PhantomData }
     }
 
     pub fn pos(&self) -> &S {
@@ -38,22 +39,23 @@ where
         (self.accessor)(s)
     }
 
-    pub fn map<F, B: 'a>(self, f: F) -> Store<'a, S, impl Fn(&'a S) -> &'a B, B>
+    pub fn map<F, B>(self, f: F) -> Store<'a, S, impl Fn(&'a S) -> &'a B , B>
     where
-        F: Fn(&A) -> &B
+        F: Fn(&'a A) -> &'a B
     {
 
         Store {
             stored: self.stored,
             accessor: move |s| f((self.accessor)(s)),
+            _marker: PhantomData
         }
     }
 
 }
 
-impl<'a, S: ?Sized, Acc, A: ?Sized + 'a> Deref for Store<'a, S, Acc, A>
+impl<'a, S: ?Sized, Acc, A: ?Sized> Deref for Store<'a, S, Acc, A>
 where
-    Acc: Fn(&'a S) -> &'a A
+    Acc: Fn(&S) -> &A
 {
     type Target = A;
 
@@ -61,3 +63,16 @@ where
         (self.accessor)(self.stored)
     }
 }
+
+impl<'a, S: ?Sized, Acc: Clone, A: ?Sized> Clone for Store<'a, S, Acc, A> {
+    fn clone(&self) -> Self {
+        Self {
+            stored: self.stored,
+            accessor: self.accessor.clone(),
+            _marker: PhantomData
+        }
+    }
+}
+
+impl<'a, S: ?Sized, Acc: Copy, A: ?Sized> Copy for Store<'a, S, Acc, A> { }
+

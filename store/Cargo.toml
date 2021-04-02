@@ -1,5 +1,5 @@
 [package]
-name = "replace"
+name = "store"
 version = "0.1.0"
 authors = ["Xyzt Toe <584605539@qq.com>"]
 edition = "2018"
@@ -7,6 +7,8 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+lens-rs = "0.2"
 
-[lib]
-proc-macro = true
+[package.metadata.inwelling]
+lens-rs = true
+
